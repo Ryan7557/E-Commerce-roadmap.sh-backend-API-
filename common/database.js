@@ -1,15 +1,17 @@
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require("sequelize");
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'E-Commerce-Roadmap.sh',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'password',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',
-    logging: process.env.NODE_ENV === 'development' ? console.log : false
-  }
-);
+// Replace below with your Supabase Database Connection String
+// Or ideally, set it in your .env file as DATABASE_URL
+const dbUrl = process.env.DATABASE_URL || "postgresql://postgres:5WuVZVVjHRYY3DhO@db.vlpetwdfqqopmqaankvz.supabase.co:5432/postgres";
+console.log('Attempting to connect to database with URL:', dbUrl.replace(/:[^:@]+@/, ':****@')); // Hide password
+const sequelize = new Sequelize(dbUrl);
+
+sequelize.authenticate()
+  .then(() => {
+    console.log("Database connected successfully!");
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err);
+  });
 
 module.exports = sequelize;

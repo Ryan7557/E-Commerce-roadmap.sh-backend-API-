@@ -3,10 +3,8 @@ const crypto = require('crypto');
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
 const User = require('../common/models/User');
-const { createClient } = require('@supabase/supabase-js');
+const supabase = require('../common/supabase');
 const multer = require('multer');
-
-const supabaseInit = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 const ajv = new Ajv();
 addFormats(ajv);
@@ -30,7 +28,7 @@ const encryptPassword = (password) => crypto.createHash('sha256').update(passwor
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // Helper function to generate JWT
-const generateAccessToken = (userId, email) => 
+const generateAccessToken = (userId, email) =>
     jwt.sign({ userId, email }, SECRET_KEY, { expiresIn: '7d' });
 
 // configure multer for image uploads
@@ -70,12 +68,12 @@ const register = [
             let imageFilename = null;
 
             // Handle profile image upload to Supabase if provided
-            if (req.file) {
+            if (req.file && supabase) {
                 imageFilename = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
                 const extension = req.file.mimetype.split('/')[1];
                 const fileName = `${imageFilename}.${extension}`;
 
-                const { data: uploadData, error: uploadError } = await supabaseInit.storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('user-avatars')
                     .upload(fileName, req.file.buffer, {
                         contentType: req.file.mimetype,
@@ -85,13 +83,15 @@ const register = [
                 if (uploadError) {
                     return res.status(400).json({
                         success: false,
-                        error: `Failed to upload profile photo: ${uploadError.message}` 
+                        error: `Failed to upload profile photo: ${uploadError.message}`
                     });
                 }
 
                 // Get the public URL of the uploaded image
-                const { data: publicUrlData } = supabaseInit.storage.from('user-avatars').getPublicUrl(fileName);
+                const { data: publicUrlData } = supabase.storage.from('user-avatars').getPublicUrl(fileName);
                 profileImageUrl = publicUrlData.publicUrl
+            } else if (req.file && !supabase) {
+                console.warn('File upload skipped: Supabase not configured');
             }
 
             // Create a new user record in the database
