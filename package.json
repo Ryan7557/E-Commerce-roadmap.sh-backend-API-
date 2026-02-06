@@ -1,0 +1,29 @@
+{
+  "name": "e-commerce-roadmap.sh-backend-api-",
+  "version": "1.0.0",
+  "description": "Roadmap.sh E-Commerce backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ryan7557/E-Commerce-roadmap.sh-backend-API-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ryan7557/E-Commerce-roadmap.sh-backend-API-/issues"
+  },
+  "homepage": "https://github.com/Ryan7557/E-Commerce-roadmap.sh-backend-API-#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.2",
+    "ajv": "^8.17.1",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "sequelize": "^6.37.7"
+  }
+}
