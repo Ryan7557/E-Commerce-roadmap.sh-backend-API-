@@ -121,4 +121,40 @@ const register = [
     }
 ];
 
-module.exports = { register };
+const login = [
+    async (req, res) => {
+        try {
+            if (!validate(req.body)) {
+                return res.status(400).json({ error: 'Invalid Input', details: validate.errors });
+            }
+
+            const { email, password } = req.body;
+            const encryptedPassword = encryptPassword(password);
+            const user = await User.findOne({ where: { email } });
+
+            if (!user || user.password !== encryptedPassword) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid email or password.'
+                });
+            }
+
+            const accessToken = generateAccessToken(user.id, user.email);
+            res.json({
+                success: true,
+                user: {
+                    id: user.id,
+                    full_name: user.full_name,
+                    email: user.email,
+                    profile_image_url: user.profile_image_url
+                },
+                token: accessToken
+            });
+        } catch (error) {
+            console.error('Login error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+]
+
+module.exports = { register, login };
