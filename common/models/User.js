@@ -23,6 +23,15 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'user',
+    validate: {
+      isIn: [['user', 'admin', 'vendor']]
+    },
+    comment: 'User role for permission management'
+  },
   profile_image_url: {
     type: DataTypes.STRING,
     allowNull: true,
