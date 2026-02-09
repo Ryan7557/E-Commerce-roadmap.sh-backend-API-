@@ -4,12 +4,16 @@ const express = require('express');
 const supabase = require('./common/supabase');
 const sequelize = require('./common/database');
 const authRoutes = require('./authorization/routes');
+const userRoutes = require('./users/routes');
 const app = express();
 
 app.use(express.json());
 
 // Import and use authorization routes
 app.use('/auth', authRoutes);
+
+// Import and use user routes
+app.use('/users', userRoutes);
 
 app.get('/status', (req, res) => {
     res.json({
