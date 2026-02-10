@@ -78,10 +78,27 @@ const createProduct = [
 
 const getAllProducts = async (req, res) => {
     try {
-        const products = await Product.findAll();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows: products } = await Product.findAndCountAll({
+            limit,
+            offset,
+            order: [['created_at', 'DESC']]
+        });
+
+        const totalPages = Math.ceil(count / limit);
+
         return res.status(200).json({
             success: true,
-            data: products
+            data: products,
+            pagination: {
+                totalItems: count,
+                totalPages,
+                currentPage: page,
+                itemsPerPage: limit
+            }
         });
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -90,9 +107,33 @@ const getAllProducts = async (req, res) => {
             error: 'Failed to fetch products'
         });
     }
+};
+
+const getProductById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: "No Product Found"
+            })
+        }
+        return res.status(200).json({
+            success: true,
+            data: product
+        })
+    } catch (error) {
+        console.error('Error fetching product:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to fetch product'
+        });
+    }
 }
 
 module.exports = {
     createProduct,
     getAllProducts,
+    getProductById
 };
