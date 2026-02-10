@@ -1,6 +1,4 @@
-const sequelize = require('../database');
-const defineUser = require('../models/User');
-const User = defineUser(sequelize);
+const User = require('../models/User');
 
 exports.has = (requiredRole) => async (req, res, next) => {
     try {

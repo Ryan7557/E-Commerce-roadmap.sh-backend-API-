@@ -1,7 +1,6 @@
 require('dotenv').config()
 
 const express = require('express');
-const supabase = require('./common/supabase');
 const sequelize = require('./common/database');
 const authRoutes = require('./authorization/routes');
 const userRoutes = require('./users/routes');
@@ -14,6 +13,9 @@ app.use('/auth', authRoutes);
 
 // Import and use user routes
 app.use('/users', userRoutes);
+
+const productRoutes = require('./products/routes');
+app.use('/', productRoutes);
 
 app.get('/status', (req, res) => {
     res.json({

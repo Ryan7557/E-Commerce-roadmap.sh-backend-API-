@@ -1,6 +1,4 @@
-const sequelize = require('../common/database');
-const defineUser = require('../common/models/User');
-const User = defineUser(sequelize);
+const User = require('../common/models/User');
 
 const getUserProfile = async (req, res) => {
     try {
