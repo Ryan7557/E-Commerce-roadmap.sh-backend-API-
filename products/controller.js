@@ -132,8 +132,80 @@ const getProductById = async (req, res) => {
     }
 }
 
+const updateProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, stock_quantity } = req.body;
+        const { userId } = req.user;
+
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: "No Product Found"
+            })
+        }
+        if (product.created_by !== userId) {
+            return res.status(403).json({
+                success: false,
+                error: "You are not authorized to update this product"
+            })
+        }
+        await product.update({
+            name,
+            description,
+            price,
+            stock_quantity
+        })
+        return res.status(200).json({
+            success: true,
+            data: product
+        })
+    } catch (error) {
+        console.error('Error updating product:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to update product'
+        })
+    }
+}
+
+const deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.user;
+
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: "No Product Found"
+            })
+        }
+        if (product.created_by !== userId) {
+            return res.status(403).json({
+                success: false,
+                error: "You are not authorized to delete this product."
+            })
+        }
+        await product.destroy();
+        return res.status(200).json({
+            success: true,
+            data: product
+        });
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to delete product'
+        })
+    }
+}
+
 module.exports = {
     createProduct,
     getAllProducts,
-    getProductById
+    getProductById,
+    updateProduct,
+    deleteProduct
 };
