@@ -1,6 +1,24 @@
 const Product = require('../common/models/Products');
 const supabase = require('../common/supabase');
 const multer = require('multer');
+const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
+const ajv = new Ajv();
+addFormats(ajv);
+
+const productSchema = {
+    type: 'object',
+    properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
+        price: { type: 'number' },
+        stock_quantity: { type: 'integer' }
+    },
+    required: ['name', 'description', 'price', 'stock_quantity'],
+    additionalProperties: true
+};
+
+const validate = ajv.compile(productSchema);
 
 // Configure multer for product image uploads
 const imageUpload = multer({
@@ -19,7 +37,23 @@ const createProduct = [
     imageUpload.single('productImage'),
     async (req, res) => {
         try {
-            const { name, description, price, stock_quantity } = req.body;
+            // Convert price and stock to numbers for validation (form-data sends strings)
+            const productData = {
+                ...req.body,
+                price: parseFloat(req.body.price),
+                stock_quantity: parseInt(req.body.stock_quantity)
+            };
+
+            const valid = validate(productData);
+            if (!valid) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid Input',
+                    details: validate.errors
+                });
+            }
+
+            const { name, description, price, stock_quantity } = productData;
             const userId = req.user.userId;
 
             let imageUrl = null;
@@ -135,8 +169,15 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, stock_quantity } = req.body;
         const { userId } = req.user;
+
+        // Convert types for validation if they exist in body
+        const productData = { ...req.body };
+        if (req.body.price) productData.price = parseFloat(req.body.price);
+        if (req.body.stock_quantity) productData.stock_quantity = parseInt(req.body.stock_quantity);
+
+        // Validation for partial updates (only validate fields present)
+        // Note: You might want a separate schema for updates or use existing one carefully
 
         const product = await Product.findByPk(id);
         if (!product) {
@@ -151,12 +192,7 @@ const updateProduct = async (req, res) => {
                 error: "You are not authorized to update this product"
             })
         }
-        await product.update({
-            name,
-            description,
-            price,
-            stock_quantity
-        })
+        await product.update(productData);
         return res.status(200).json({
             success: true,
             data: product
