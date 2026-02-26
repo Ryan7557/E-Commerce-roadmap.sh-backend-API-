@@ -15,6 +15,8 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 
 const productRoutes = require('./products/routes');
+const GlobalErrorHandler = require('./common/middlewares/ErrorHandler');
+
 app.use('/', productRoutes);
 
 app.get('/status', (req, res) => {
@@ -23,6 +25,9 @@ app.get('/status', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// Global Error Handler - MUST be the last middleware
+app.use(GlobalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
 

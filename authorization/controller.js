@@ -1,28 +1,23 @@
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const Ajv = require('ajv');
-const addFormats = require('ajv-formats');
+const bcrypt = require('bcrypt');
+const { z } = require('zod');
 const User = require('../common/models/User');
 const supabase = require('../common/supabase');
 const multer = require('multer');
+const AppError = require('../common/utils/AppError');
 
-const ajv = new Ajv();
-addFormats(ajv);
+const signupSchema = z.object({
+    full_name: z.string().min(3, 'Full name must be at least 3 characters'),
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(6, 'Password must be at least 6 characters')
+});
 
-const schema = {
-    type: 'object',
-    required: ['full_name', 'email', 'password'],
-    properties: {
-        full_name: { type: 'string', minLength: 3 },
-        email: { type: 'string', format: 'email' },
-        password: { type: 'string', minLength: 6 }
-    }
-};
+const loginSchema = z.object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(1, 'Password is required')
+});
 
-const validate = ajv.compile(schema);
 
-// Helper function to hash passwords
-const encryptPassword = (password) => crypto.createHash('sha256').update(password).digest('hex');
 
 // SECRET key for JWT (in production, use a secure method to store this)
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
@@ -46,22 +41,18 @@ const imageUpload = multer({
 
 const register = [
     imageUpload.single('profileImage'),
-    async (req, res) => {
+    async (req, res, next) => {
         try {
-            if (!validate(req.body)) {
-                return res.status(400).json({ error: 'Invalid Input', details: validate.errors });
-            }
-
             const { full_name, email, password } = req.body;
-            const encryptedPassword = encryptPassword(password);
+
+            // Hash password with bcrypt
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
 
             // Check if a user already exists with the same email
             const existingUser = await User.findOne({ where: { email } });
             if (existingUser) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Email already registered.'
-                });
+                return next(new AppError('Email already registered.', 400));
             }
 
             let profileImageUrl = null;
@@ -81,10 +72,7 @@ const register = [
                     });
 
                 if (uploadError) {
-                    return res.status(400).json({
-                        success: false,
-                        error: `Failed to upload profile photo: ${uploadError.message}`
-                    });
+                    return next(new AppError(`Failed to upload profile photo: ${uploadError.message}`, 400));
                 }
 
                 // Get the public URL of the uploaded image
@@ -94,11 +82,10 @@ const register = [
                 console.warn('File upload skipped: Supabase not configured');
             }
 
-            // Create a new user record in the database
             const createNewUser = await User.create({
                 full_name,
                 email,
-                password: encryptedPassword,
+                password: hashedPassword,
                 profile_image_url: profileImageUrl,
                 image_filename: imageFilename
             });
@@ -115,28 +102,19 @@ const register = [
                 token: accessToken
             });
         } catch (error) {
-            console.error('Register error:', error);
-            res.status(500).json({ success: false, error: error.message });
+            next(error);
         }
     }
 ];
 
 const login = [
-    async (req, res) => {
+    async (req, res, next) => {
         try {
-            if (!validate(req.body)) {
-                return res.status(400).json({ error: 'Invalid Input', details: validate.errors });
-            }
-
             const { email, password } = req.body;
-            const encryptedPassword = encryptPassword(password);
             const user = await User.findOne({ where: { email } });
 
-            if (!user || user.password !== encryptedPassword) {
-                return res.status(401).json({
-                    success: false,
-                    error: 'Invalid email or password.'
-                });
+            if (!user || !(await bcrypt.compare(password, user.password))) {
+                return next(new AppError('Invalid email or password.', 401));
             }
 
             const accessToken = generateAccessToken(user.id, user.email);
@@ -151,10 +129,9 @@ const login = [
                 token: accessToken
             });
         } catch (error) {
-            console.error('Login error:', error);
-            res.status(500).json({ success: false, error: error.message });
+            next(error);
         }
     }
 ]
 
-module.exports = { register, login };
+module.exports = { register, login, signupSchema, loginSchema };

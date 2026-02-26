@@ -1,6 +1,7 @@
 const User = require('../common/models/User');
+const AppError = require('../common/utils/AppError');
 
-const getUserProfile = async (req, res) => {
+const getUserProfile = async (req, res, next) => {
     try {
         const user = await User.findOne({
             where: { id: req.user.userId },
@@ -8,25 +9,18 @@ const getUserProfile = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'User not found'
-            });
+            return next(new AppError('User not found', 404));
         }
         return res.status(200).json({
             success: true,
             data: user
         });
     } catch (error) {
-        console.error('Error fetching user profile:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to fetch user profile'
-        });
+        next(error);
     }
 }
 
-const getAllUsersProfiles = async (req, res) => {
+const getAllUsersProfiles = async (req, res, next) => {
     try {
         const users = await User.findAll({
             attributes: ['id', 'full_name', 'email',
@@ -41,11 +35,7 @@ const getAllUsersProfiles = async (req, res) => {
             data: users
         });
     } catch (error) {
-        console.error('Error fetching all users profiles:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to fetch all users profiles'
-        });
+        next(error);
     }
 }
 
