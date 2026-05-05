@@ -172,9 +172,15 @@ const deleteProduct = async (req, res, next) => {
         if (product.created_by !== userId) {
             return next(new AppError("You are not authorized to delete this product.", 403));
         }
+
+        // Fix: Delete references in carts first to avoid Foreign Key Constraint Error
+        const Cart = require('../common/models/Cart');
+        await Cart.destroy({ where: { product_id: id } });
+
         await product.destroy();
         return res.status(200).json({
             success: true,
+            message: "Product and related cart items deleted successfully",
             data: product
         });
     } catch (error) {

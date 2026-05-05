@@ -4,10 +4,10 @@ const { createProduct, getAllProducts, getProductById, updateProduct, deleteProd
 const checkAuthentication = require('../common/middlewares/IsAuthenticated');
 const validateRequest = require('../common/middlewares/ValidateRequest');
 
-router.post('/products', checkAuthentication, validateRequest(productSchema), createProduct);
-router.get('/products', getAllProducts);
-router.get('/products/:id', getProductById);
-router.put('/products/:id', checkAuthentication, validateRequest(productSchema.partial()), updateProduct);
-router.delete('/products/:id', checkAuthentication, deleteProduct);
+router.post('/', checkAuthentication, validateRequest(productSchema), createProduct);
+router.get('/', getAllProducts);
+router.get('/:id', getProductById);
+router.put('/:id', checkAuthentication, validateRequest(productSchema.partial()), updateProduct);
+router.delete('/:id', checkAuthentication, deleteProduct);
 
 module.exports = router;
