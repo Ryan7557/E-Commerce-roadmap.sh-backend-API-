@@ -4,6 +4,9 @@ const express = require('express');
 const sequelize = require('./common/database');
 const authRoutes = require('./authorization/routes');
 const userRoutes = require('./users/routes');
+const productRoutes = require('./products/routes');
+const cartRoutes = require('./cart/routes');
+const GlobalErrorHandler = require('./common/middlewares/ErrorHandler');
 const app = express();
 
 app.use(express.json());
@@ -14,10 +17,12 @@ app.use('/auth', authRoutes);
 // Import and use user routes
 app.use('/users', userRoutes);
 
-const productRoutes = require('./products/routes');
-const GlobalErrorHandler = require('./common/middlewares/ErrorHandler');
+// Import and use product routes
+app.use('/products', productRoutes);
 
-app.use('/', productRoutes);
+// Import and use cart routes
+app.use('/carts', cartRoutes);
+
 
 app.get('/status', (req, res) => {
     res.json({

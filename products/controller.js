@@ -2,6 +2,7 @@ const Product = require('../common/models/Products');
 const supabase = require('../common/supabase');
 const multer = require('multer');
 const { z } = require('zod');
+const { Op } = require('sequelize');
 const AppError = require('../common/utils/AppError');
 
 const productSchema = z.object({
@@ -85,8 +86,18 @@ const getAllProducts = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
+        const search = req.query.search;
+
+        const whereClause = {};
+        if (search) {
+            whereClause[Op.or] = [
+                { name: { [Op.iLike]: `%${search}%` } },
+                { description: { [Op.iLike]: `%${search}%` } }
+            ];
+        }
 
         const { count, rows: products } = await Product.findAndCountAll({
+            where: whereClause,
             limit,
             offset,
             order: [['created_at', 'DESC']]
