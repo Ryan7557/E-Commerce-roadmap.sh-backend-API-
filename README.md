@@ -89,4 +89,4 @@ The project is pre-configured for **Render** or **Railway**.
 
 ---
 
-*Developed as part of the Roadmap.sh backend challenge, enhanced with premium security and architecture.*
+*Developed as part of the [Roadmap.sh E-Commerce API Challenge](https://roadmap.sh/projects/ecommerce-api), enhanced with premium security and architecture.*
